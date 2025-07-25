@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoSave System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        #log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>AutoSave System Test</h1>
+        
+        <div class="test-section">
+            <h2>시스템 상태</h2>
+            <div id="system-status"></div>
+            <button class="test-button" onclick="checkSystemStatus()">상태 확인</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>자동저장 테스트</h2>
+            <button class="test-button" onclick="testManualSave()">수동 저장 테스트</button>
+            <button class="test-button" onclick="testDebouncedSave()">디바운스 저장 테스트</button>
+            <button class="test-button" onclick="testEventTrigger()">이벤트 트리거 테스트</button>
+            <button class="test-button" onclick="testPeriodicSave()">주기적 저장 테스트</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>설정 테스트</h2>
+            <button class="test-button" onclick="testSettingsUpdate()">설정 업데이트 테스트</button>
+            <button class="test-button" onclick="testStatsRetrieval()">통계 조회 테스트</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>로그</h2>
+            <div id="log"></div>
+            <button class="test-button" onclick="clearLog()">로그 지우기</button>
+        </div>
+    </div>
+
+    <!-- 필요한 스크립트들 -->
+    <script src="gameStateManager.js"></script>
+    <script src="autoSaveSystem.js"></script>
+    
+    <script>
+        // 테스트용 전역 변수들
+        let nations = [];
+        let currentYear = 0;
+        let simulationRunning = false;
+        let selectedNation = null;
+        let nextNationId = 1;
+        
+        // 가짜 pixelMap 객체
+        window.pixelMap = {
+            terrainMap: [],
+            nationMap: [],
+            cityMap: [],
+            provinceMap: [],
+            provinceNames: [],
+            zoomLevel: 1,
+            panX: 0,
+            panY: 0,
+            mapWidth: 300,
+            mapHeight: 200
+        };
+        
+        // 로그 함수
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.className = type;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            console.log(`[AutoSave Test] ${message}`);
+        }
+        
+        function showResult(message, success = true) {
+            const statusDiv = document.getElementById('system-status');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${success ? 'success' : 'error'}`;
+            resultDiv.textContent = message;
+            statusDiv.appendChild(resultDiv);
+            
+            // 3초 후 제거
+            setTimeout(() => {
+                if (resultDiv.parentNode) {
+                    resultDiv.parentNode.removeChild(resultDiv);
+                }
+            }, 3000);
+        }
+        
+        // 시스템 상태 확인
+        function checkSystemStatus() {
+            log('시스템 상태 확인 시작');
+            
+            try {
+                // GameStateManager 확인
+                if (window.gameStateManager) {
+                    log('✓ GameStateManager 초기화됨');
+                    showResult('GameStateManager: 정상', true);
+                } else {
+                    log('✗ GameStateManager 초기화되지 않음');
+                    showResult('GameStateManager: 오류', false);
+                    return;
+                }
+                
+                // AutoSaveSystem 확인
+                if (window.autoSaveSystem) {
+                    log('✓ AutoSaveSystem 초기화됨');
+                    showResult('AutoSaveSystem: 정상', true);
+                    
+                    // 통계 정보 표시
+                    const stats = window.autoSaveSystem.getStats();
+                    log(`AutoSaveSystem 통계: ${JSON.stringify(stats)}`);
+                } else {
+                    log('✗ AutoSaveSystem 초기화되지 않음');
+                    showResult('AutoSaveSystem: 오류', false);
+                    return;
+                }
+                
+                showResult('모든 시스템 정상 작동', true);
+                
+            } catch (error) {
+                log(`시스템 상태 확인 중 오류: ${error.message}`, 'error');
+                showResult(`시스템 오류: ${error.message}`, false);
+            }
+        }
+        
+        // 수동 저장 테스트
+        function testManualSave() {
+            log('수동 저장 테스트 시작');
+            
+            try {
+                if (!window.autoSaveSystem) {
+                    throw new Error('AutoSaveSystem이 초기화되지 않음');
+                }
+                
+                window.autoSaveSystem.triggerAutoSave('manual_test', true);
+                log('✓ 수동 저장 트리거 성공');
+                showResult('수동 저장 테스트 성공', true);
+                
+            } catch (error) {
+                log(`수동 저장 테스트 실패: ${error.message}`, 'error');
+                showResult(`수동 저장 테스트 실패: ${error.message}`, false);
+            }
+        }
+        
+        // 디바운스 저장 테스트
+        function testDebouncedSave() {
+            log('디바운스 저장 테스트 시작');
+            
+            try {
+                if (!window.autoSaveSystem) {
+                    throw new Error('AutoSaveSystem이 초기화되지 않음');
+                }
+                
+                // 연속으로 여러 번 트리거
+                for (let i = 0; i < 5; i++) {
+                    window.autoSaveSystem.triggerAutoSave(`debounce_test_${i}`);
+                    log(`디바운스 트리거 ${i + 1}/5`);
+                }
+                
+                log('✓ 디바운스 저장 트리거 성공 (2초 후 실제 저장됨)');
+                showResult('디바운스 저장 테스트 성공', true);
+                
+            } catch (error) {
+                log(`디바운스 저장 테스트 실패: ${error.message}`, 'error');
+                showResult(`디바운스 저장 테스트 실패: ${error.message}`, false);
+            }
+        }
+        
+        // 이벤트 트리거 테스트
+        function testEventTrigger() {
+            log('이벤트 트리거 테스트 시작');
+            
+            try {
+                if (!window.autoSaveSystem) {
+                    throw new Error('AutoSaveSystem이 초기화되지 않음');
+                }
+                
+                // 다양한 게임 이벤트 테스트
+                const testEvents = [
+                    { type: 'nation_created', data: { nationId: 1, nationName: 'Test Nation' } },
+                    { type: 'war_started', data: { attacker: 1, defender: 2 } },
+                    { type: 'year_advanced', data: { year: 100 } },
+                    { type: 'simulation_started', data: { year: 100 } }
+                ];
+                
+                testEvents.forEach((event, index) => {
+                    setTimeout(() => {
+                        window.autoSaveSystem.onGameEvent(event.type, event.data);
+                        log(`✓ 이벤트 트리거: ${event.type}`);
+                    }, index * 500);
+                });
+                
+                showResult('이벤트 트리거 테스트 시작됨', true);
+                
+            } catch (error) {
+                log(`이벤트 트리거 테스트 실패: ${error.message}`, 'error');
+                showResult(`이벤트 트리거 테스트 실패: ${error.message}`, false);
+            }
+        }
+        
+        // 주기적 저장 테스트
+        function testPeriodicSave() {
+            log('주기적 저장 테스트 시작');
+            
+            try {
+                if (!window.autoSaveSystem) {
+                    throw new Error('AutoSaveSystem이 초기화되지 않음');
+                }
+                
+                // 시뮬레이션 실행 상태로 변경
+                window.simulationRunning = true;
+                log('시뮬레이션 상태를 true로 변경');
+                
+                // 10초 후 시뮬레이션 중지
+                setTimeout(() => {
+                    window.simulationRunning = false;
+                    log('시뮬레이션 상태를 false로 변경');
+                }, 10000);
+                
+                showResult('주기적 저장 테스트 시작됨 (10초간 실행)', true);
+                
+            } catch (error) {
+                log(`주기적 저장 테스트 실패: ${error.message}`, 'error');
+                showResult(`주기적 저장 테스트 실패: ${error.message}`, false);
+            }
+        }
+        
+        // 설정 업데이트 테스트
+        function testSettingsUpdate() {
+            log('설정 업데이트 테스트 시작');
+            
+            try {
+                if (!window.autoSaveSystem) {
+                    throw new Error('AutoSaveSystem이 초기화되지 않음');
+                }
+                
+                const newSettings = {
+                    debounceDelay: 3000,
+                    periodicSaveInterval: 20000,
+                    minSaveInterval: 3000
+                };
+                
+                window.autoSaveSystem.updateSettings(newSettings);
+                log(`✓ 설정 업데이트 성공: ${JSON.stringify(newSettings)}`);
+                showResult('설정 업데이트 테스트 성공', true);
+                
+            } catch (error) {
+                log(`설정 업데이트 테스트 실패: ${error.message}`, 'error');
+                showResult(`설정 업데이트 테스트 실패: ${error.message}`, false);
+            }
+        }
+        
+        // 통계 조회 테스트
+        function testStatsRetrieval() {
+            log('통계 조회 테스트 시작');
+            
+            try {
+                if (!window.autoSaveSystem) {
+                    throw new Error('AutoSaveSystem이 초기화되지 않음');
+                }
+                
+                const stats = window.autoSaveSystem.getStats();
+                log(`✓ 통계 조회 성공: ${JSON.stringify(stats, null, 2)}`);
+                showResult('통계 조회 테스트 성공', true);
+                
+            } catch (error) {
+                log(`통계 조회 테스트 실패: ${error.message}`, 'error');
+                showResult(`통계 조회 테스트 실패: ${error.message}`, false);
+            }
+        }
+        
+        // 로그 지우기
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('system-status').innerHTML = '';
+        }
+        
+        // 페이지 로드 시 초기 상태 확인
+        document.addEventListener('DOMContentLoaded', () => {
+            log('AutoSave System 테스트 페이지 로드됨');
+            
+            // 1초 후 자동으로 시스템 상태 확인
+            setTimeout(() => {
+                checkSystemStatus();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

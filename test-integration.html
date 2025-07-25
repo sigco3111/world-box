@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameStateManager 통합 테스트</title>
+</head>
+<body>
+    <h1>GameStateManager 통합 테스트</h1>
+    <button onclick="testSave()">저장 테스트</button>
+    <button onclick="testLoad()">불러오기 테스트</button>
+    <button onclick="testReset()">초기화 테스트</button>
+    <button onclick="testBackup()">백업 테스트</button>
+    <button onclick="showStorageInfo()">저장 공간 정보</button>
+    <div id="results"></div>
+    
+    <script src="gameStateManager.js"></script>
+    <script>
+        // 게임 환경 시뮬레이션
+        window.nations = [
+            { id: 1, name: '테스트 왕국', color: '#ff0000', population: 4200000, government: '조합', stability: 100, gdp: 1200, armyStrength: 1 }
+        ];
+        window.nextNationId = 2;
+        window.selectedNation = null;
+        window.currentYear = 0;
+        window.simulationRunning = false;
+        
+        window.pixelMap = {
+            terrainMap: [['grassland', 'forest'], ['sand', 'water']],
+            nationMap: [[1, null], [null, null]],
+            cityMap: [{ x: 0, y: 0, name: '테스트 도시', nationId: 1 }],
+            provinceMap: [[1, null], [null, null]],
+            provinceNames: [{ id: 1, name: '테스트 지방' }],
+            zoomLevel: 1,
+            panX: 0,
+            panY: 0,
+            mapWidth: 300,
+            mapHeight: 200,
+            render: function() { console.log('맵 렌더링'); }
+        };
+        
+        // 가짜 DOM 요소들
+        document.getElementById = function(id) {
+            const fakeElements = {
+                'world-aggression': { value: 'balanced' },
+                'rebellion-frequency': { value: 'medium' },
+                'sim-speed': { value: 'medium' },
+                'year-display': { textContent: '연도: 0' },
+                'world-economy': { textContent: '세계 무역: 0' },
+                'start-simulation': { disabled: false },
+                'stop-simulation': { disabled: true }
+            };
+            return fakeElements[id] || { value: '', textContent: '', disabled: false };
+        };
+        
+        const results = document.getElementById('results');
+        
+        function log(message) {
+            results.innerHTML += `<p>${new Date().toLocaleTimeString()}: ${message}</p>`;
+        }
+        
+        function testSave() {
+            log('저장 테스트 시작...');
+            const success = window.gameStateManager.saveGameState(false);
+            log(`저장 결과: ${success ? '성공' : '실패'}`);
+        }
+        
+        function testLoad() {
+            log('불러오기 테스트 시작...');
+            // 데이터 변경
+            window.currentYear = 999;
+            log(`변경된 연도: ${window.currentYear}`);
+            
+            const success = window.gameStateManager.loadGameState();
+            log(`불러오기 결과: ${success ? '성공' : '실패'}`);
+            log(`복원된 연도: ${window.currentYear}`);
+        }
+        
+        function testReset() {
+            log('초기화 테스트 시작...');
+            const success = window.gameStateManager.resetGame();
+            log(`초기화 결과: ${success ? '성공' : '실패'}`);
+        }
+        
+        function testBackup() {
+            log('백업 테스트 시작...');
+            window.gameStateManager.createBackup('manual_test');
+            const backups = window.gameStateManager.getBackups();
+            log(`백업 개수: ${backups.backups.length}`);
+            if (backups.backups.length > 0) {
+                log(`최신 백업: ${backups.backups[0].reason} (${new Date(backups.backups[0].timestamp).toLocaleString()})`);
+            }
+        }
+        
+        function showStorageInfo() {
+            log('저장 공간 정보 확인...');
+            const usage = window.gameStateManager.getStorageUsage();
+            log(`사용량: ${usage.usedFormatted} / ${usage.quotaFormatted} (${usage.percentage.toFixed(2)}%)`);
+        }
+    </script>
+</body>
+</html>

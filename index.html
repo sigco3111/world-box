@@ -1,0 +1,178 @@
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>월드박스 lite</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="importmap">
+    {
+      "imports": {
+        "name-generator": "https://cdn.jsdelivr.net/npm/fantasy-name-generator@2.0.0/dist/index.min.js",
+        "perlin": "https://cdn.jsdelivr.net/npm/perlin-noise@0.0.1/index.js"
+      }
+    }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>월드박스 lite</h1>
+
+            <!-- 탭 메뉴 -->
+            <div class="tab-menu">
+                <button class="tab-btn active" data-tab="simulation">시뮬레이션</button>
+                <button class="tab-btn" data-tab="nations">국가</button>
+                <button class="tab-btn" data-tab="settings">설정</button>
+            </div>
+
+            <div class="tools">
+                <!-- 시뮬레이션 탭 (기본 활성화) -->
+                <div class="tab-content active" id="simulation-tab">
+                    <h2>시뮬레이션</h2>
+                    <div class="simulation-controls">
+                        <button id="start-simulation">시뮬레이션 시작</button>
+                        <button id="stop-simulation" disabled>시뮬레이션 중지</button>
+                        <div class="setting">
+                            <label for="sim-speed">속도:</label>
+                            <select id="sim-speed">
+                                <option value="slow">느림</option>
+                                <option value="medium" selected>중간</option>
+                                <option value="fast">빠름</option>
+                                <option value="very-fast">매우 빠름 (10x)</option>
+                                <option value="ultra-fast">초고속 (40x)</option>
+                            </select>
+                        </div>
+                        <div class="setting">
+                            <label for="world-aggression">세계 공격성:</label>
+                            <select id="world-aggression">
+                                <option value="peaceful">평화적</option>
+                                <option value="cautious">신중함</option>
+                                <option value="balanced" selected>균형</option>
+                                <option value="aggressive">공격적</option>
+                                <option value="warmonger">전쟁광</option>
+                            </select>
+                        </div>
+                        <div class="rebellion-controls">
+                            <label for="rebellion-frequency">반란 빈도:
+                                <select id="rebellion-frequency">
+                                    <option value="off">없음</option>
+                                    <option value="low">낮음</option>
+                                    <option value="medium" selected>중간</option>
+                                    <option value="high">높음</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="year-display">연도: 0</div>
+                        <div id="world-economy">세계 무역: 0</div>
+                    </div>
+                    
+                    <!-- 지형 도구 및 그리기 모드 기능 숨김 -->
+                </div>
+
+                <!-- 국가 탭 -->
+                <div class="tab-content" id="nations-tab">
+                    <h2>국가 도구</h2>
+                    <div id="nation-color-picker">
+                        <input type="color" id="nation-color" value="#FF0000">
+                        <input type="text" id="nation-name" placeholder="국가 이름">
+                        <button id="add-nation">국가 추가</button>
+                    </div>
+                    <div id="nations-list">
+                        <!-- 국가 목록이 여기에 추가됩니다 -->
+                    </div>
+
+
+                </div>
+
+                <!-- 설정 탭 -->
+                <div class="tab-content" id="settings-tab">
+                    <h2>지도 설정</h2>
+                    <div class="map-settings">
+                        <div class="setting">
+                            <label for="map-size">지도 크기:</label>
+                            <select id="map-size">
+                                <option value="small">작게 (800x600)</option>
+                                <option value="medium" selected>중간 (1200x800)</option>
+                                <option value="large">크게 (1600x1000)</option>
+                            </select>
+                        </div>
+                        <button id="apply-settings">설정 적용</button>
+                    </div>
+                    
+                    <h2>지도 액션</h2>
+                    <button id="clear-map">지도 초기화</button>
+                    <button id="generate-map">랜덤 지도 생성</button>
+                    
+                    <h2>내보내기/가져오기</h2>
+                    <div class="export-import">
+                        <button id="export-map">지도 내보내기</button>
+                        <button id="import-map">지도 가져오기</button>
+                    </div>
+                    
+                    <h2>게임 데이터 관리</h2>
+                    <div class="game-data-section">
+                        <div class="data-info">
+                            <p><strong>저장된 데이터 크기:</strong> <span id="data-size">계산 중...</span></p>
+                            <p><strong>마지막 저장:</strong> <span id="last-save-time">없음</span></p>
+                        </div>
+                        <div class="data-controls">
+                            <button id="manual-save-btn" class="action-btn">수동 저장</button>
+                            <button id="reset-game-btn" class="danger-btn">게임 초기화</button>
+                            <button id="clear-data-btn" class="danger-btn">모든 데이터 삭제</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <canvas id="map" width="1200" height="800"></canvas>
+        </div>
+    </div>
+
+    <script src="notificationSystem.js"></script>
+    <script src="gameStateManager.js"></script>
+    <script src="autoSaveSystem.js"></script>
+    <script src="gameDataUI.js"></script>
+    <script src="map.js"></script>
+    <script src="terrain.js"></script>
+    <script src="nations.js"></script>
+    <script src="provinces.js"></script>
+    <script src="app.js"></script>
+    <div id="nation-hover-info" class="nation-hover-info"></div>
+    <div id="nation-detailed-info" class="nation-detailed-info">
+        <button class="close-btn">&times;</button>
+        <h3 id="info-nation-name"></h3>
+        <p><strong>정부:</strong> <span id="info-nation-gov"></span></p>
+        <p><strong>건국:</strong> <span id="info-nation-founded"></span></p>
+        <p><strong>인구:</strong> <span id="info-nation-pop"></span></p>
+        <p><strong>1인당 GDP:</strong> <span id="info-nation-gdp"></span></p>
+        <p><strong>군사력:</strong> <span id="info-nation-army"></span></p>
+        <p><strong>안정도:</strong> <span id="info-nation-stability"></span></p>
+        <p><strong>문화적 특성:</strong> <span id="info-nation-traits"></span></p>
+        <p><strong>도시:</strong> <span id="info-nation-cities"></span></p>
+        <p><strong>자원:</strong> <span id="info-nation-resources"></span></p>
+        <p><strong>무역 경로:</strong> <span id="info-nation-trade"></span></p>
+        <p><strong>동맹국:</strong> <span id="info-nation-allies"></span></p>
+        <p><strong>전쟁 중:</strong> <span id="info-nation-wars"></span></p>
+        <p><strong>속국:</strong> <span id="info-nation-vassals"></span></p>
+        <p><strong>종주국:</strong> <span id="info-nation-overlord"></span></p>
+    </div>
+
+    <!-- 상태 알림 컨테이너 -->
+    <div id="game-state-notifications" class="state-notifications"></div>
+
+    <!-- 확인 대화상자 -->
+    <div id="confirmation-dialog" class="confirmation-dialog">
+        <h3 id="dialog-title">확인</h3>
+        <p id="dialog-message">정말로 실행하시겠습니까?</p>
+        <div class="confirmation-buttons">
+            <button id="dialog-confirm" class="confirm-btn">확인</button>
+            <button id="dialog-cancel" class="cancel-btn">취소</button>
+        </div>
+    </div>
+</body>
+
+</html>

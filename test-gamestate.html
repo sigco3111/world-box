@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameStateManager 테스트</title>
+</head>
+<body>
+    <h1>GameStateManager 테스트</h1>
+    <div id="test-results"></div>
+    
+    <script src="gameStateManager.js"></script>
+    <script>
+        // 테스트용 전역 변수 설정
+        window.nations = [
+            { id: 1, name: '테스트 국가', color: '#ff0000', population: 1000000 }
+        ];
+        window.nextNationId = 2;
+        window.selectedNation = null;
+        window.currentYear = 100;
+        window.simulationRunning = false;
+        
+        // 테스트용 pixelMap 객체
+        window.pixelMap = {
+            terrainMap: [['grassland', 'forest'], ['sand', 'water']],
+            nationMap: [[1, null], [null, null]],
+            cityMap: [{ x: 0, y: 0, name: '테스트 도시', nationId: 1 }],
+            provinceMap: [[1, null], [null, null]],
+            provinceNames: [{ id: 1, name: '테스트 지방' }],
+            zoomLevel: 1,
+            panX: 0,
+            panY: 0,
+            mapWidth: 300,
+            mapHeight: 200,
+            render: function() { console.log('맵 렌더링'); }
+        };
+        
+        const results = document.getElementById('test-results');
+        
+        function runTests() {
+            const manager = window.gameStateManager;
+            let testsPassed = 0;
+            let totalTests = 0;
+            
+            function test(name, testFn) {
+                totalTests++;
+                try {
+                    const result = testFn();
+                    if (result) {
+                        testsPassed++;
+                        results.innerHTML += `<p style="color: green;">✅ ${name}: 통과</p>`;
+                    } else {
+                        results.innerHTML += `<p style="color: red;">❌ ${name}: 실패</p>`;
+                    }
+                } catch (error) {
+                    results.innerHTML += `<p style="color: red;">❌ ${name}: 오류 - ${error.message}</p>`;
+                }
+            }
+            
+            // 테스트 1: GameStateManager 인스턴스 생성 확인
+            test('GameStateManager 인스턴스 생성', () => {
+                return manager instanceof GameStateManager;
+            });
+            
+            // 테스트 2: 현재 게임 상태 수집
+            test('현재 게임 상태 수집', () => {
+                const state = manager.collectCurrentGameState();
+                return state && state.version && state.gameData && state.gameData.nations.length === 1;
+            });
+            
+            // 테스트 3: 데이터 검증
+            test('데이터 검증', () => {
+                const state = manager.collectCurrentGameState();
+                return manager.validateGameData(state);
+            });
+            
+            // 테스트 4: 잘못된 데이터 검증 실패
+            test('잘못된 데이터 검증 실패', () => {
+                return !manager.validateGameData({ invalid: 'data' });
+            });
+            
+            // 테스트 5: 저장 기능
+            test('게임 상태 저장', () => {
+                return manager.saveGameState(false);
+            });
+            
+            // 테스트 6: 불러오기 기능
+            test('게임 상태 불러오기', () => {
+                // 먼저 데이터 변경
+                window.currentYear = 200;
+                // 불러오기 실행
+                const result = manager.loadGameState();
+                // 원래 값으로 복원되었는지 확인
+                return result && window.currentYear === 100;
+            });
+            
+            // 테스트 7: 백업 생성
+            test('백업 생성', () => {
+                manager.createBackup('test');
+                const backups = manager.getBackups();
+                return backups.backups.length > 0;
+            });
+            
+            // 테스트 8: 저장 공간 사용량 확인
+            test('저장 공간 사용량 확인', () => {
+                const usage = manager.getStorageUsage();
+                return usage && typeof usage.used === 'number' && typeof usage.percentage === 'number';
+            });
+            
+            // 테스트 9: 바이트 포맷팅
+            test('바이트 포맷팅', () => {
+                const formatted = manager.formatBytes(1024);
+                return formatted === '1 KB';
+            });
+            
+            // 테스트 10: 데이터 마이그레이션
+            test('데이터 마이그레이션', () => {
+                const oldData = { version: '0.9.0', timestamp: Date.now(), gameData: {} };
+                const migrated = manager.migrateData(oldData);
+                return migrated.version === '1.0.0';
+            });
+            
+            // 결과 요약
+            results.innerHTML += `<hr><h2>테스트 결과: ${testsPassed}/${totalTests} 통과</h2>`;
+            
+            if (testsPassed === totalTests) {
+                results.innerHTML += '<p style="color: green; font-weight: bold;">🎉 모든 테스트 통과!</p>';
+            } else {
+                results.innerHTML += '<p style="color: red; font-weight: bold;">⚠️ 일부 테스트 실패</p>';
+            }
+        }
+        
+        // 페이지 로드 후 테스트 실행
+        document.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>
