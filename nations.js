@@ -1,12 +1,7 @@
-// Global array to store all nations - window.nations를 직접 사용
-if (!window.nations) window.nations = [];
-if (!window.selectedNation) window.selectedNation = null;
-if (!window.nextNationId) window.nextNationId = 1;
-
-// 로컬 참조를 window 객체로 연결
-let nations = window.nations;
-let selectedNation = window.selectedNation;
-let nextNationId = window.nextNationId;
+// Global array to store all nations
+let nations = [];
+let selectedNation = null;
+let nextNationId = 1;
 let simulationRunning = false;
 let currentYear = 0;
 let simulationInterval = null;
@@ -47,7 +42,7 @@ class NationManager {
             const nameInput = document.getElementById('nation-name');
             
             const color = colorInput.value;
-            const name = nameInput.value.trim() || `Nation ${window.nextNationId}`;
+            const name = nameInput.value.trim() || `Nation ${nextNationId}`;
             
             this.addNation(name, color);
             nameInput.value = '';
@@ -81,21 +76,11 @@ class NationManager {
     startSimulation() {
         simulationRunning = true;
         this.updateSimulationSpeed();
-        
-        // 자동저장 트리거
-        if (window.autoSaveSystem) {
-            window.autoSaveSystem.onGameEvent('simulation_started', { year: currentYear });
-        }
     }
     
     stopSimulation() {
         simulationRunning = false;
         clearInterval(simulationInterval);
-        
-        // 자동저장 트리거
-        if (window.autoSaveSystem) {
-            window.autoSaveSystem.onGameEvent('simulation_stopped', { year: currentYear });
-        }
     }
     
     updateSimulationSpeed() {
@@ -132,11 +117,6 @@ class NationManager {
         // Advance year
         currentYear++;
         document.getElementById('year-display').textContent = `Year: ${currentYear}`;
-        
-        // 자동저장 트리거 (매 10년마다)
-        if (currentYear % 10 === 0 && window.autoSaveSystem) {
-            window.autoSaveSystem.onGameEvent('year_advanced', { year: currentYear });
-        }
         
         // Get world aggression setting
         const worldAggression = document.getElementById('world-aggression').value;
@@ -188,7 +168,7 @@ class NationManager {
     
     removeNation(nationId) {
         // Remove nation from global list
-        window.nations = window.nations.filter(n => n.id !== nationId);
+        nations = nations.filter(n => n.id !== nationId);
 
         // Clear its territory on the map
         for (let y = 0; y < this.map.mapHeight; y++) {
@@ -231,11 +211,6 @@ class NationManager {
 
         this.renderNationsList();
         this.map.render();
-        
-        // 자동저장 트리거
-        if (window.autoSaveSystem) {
-            window.autoSaveSystem.onGameEvent('nation_deleted', { nationId: nationId });
-        }
     }
     
     attemptRandomNationFormation() {
@@ -262,7 +237,7 @@ class NationManager {
             
             // Create the nation
             const nation = {
-                id: window.nextNationId++,
+                id: nextNationId++,
                 name: name,
                 color: color,
                 cities: [],
@@ -288,7 +263,7 @@ class NationManager {
                 industries: this.generateRandomIndustries()
             };
             
-            window.nations.push(nation);
+            nations.push(nation);
             this.renderNationsList();
             
             // Claim initial territory
@@ -366,7 +341,7 @@ class NationManager {
     
     addNation(name, color) {
         const nation = {
-            id: window.nextNationId++,
+            id: nextNationId++,
             name: name,
             color: color,
             cities: [],
@@ -391,17 +366,12 @@ class NationManager {
             industries: this.generateRandomIndustries()
         };
         
-        window.nations.push(nation);
+        nations.push(nation);
         this.renderNationsList();
         
         // Select the newly added nation
         selectedNation = nation;
         this.updateSelectedNation();
-        
-        // 자동저장 트리거
-        if (window.autoSaveSystem) {
-            window.autoSaveSystem.onGameEvent('nation_created', { nationId: nation.id, nationName: nation.name });
-        }
     }
     
     randomGovernment() {
@@ -465,7 +435,7 @@ class NationManager {
         nationsList.innerHTML = '';
         
         // Sort nations by territory size or population
-        const sortedNations = [...window.nations].sort((a, b) => {
+        const sortedNations = [...nations].sort((a, b) => {
             const popA = a.population || 0;
             const popB = b.population || 0;
             return popB - popA;
@@ -2446,7 +2416,7 @@ class NationAI {
         const newNationName = this.generateSplitNationName(nation.name);
         
         const newNation = {
-            id: window.nextNationId++,
+            id: nextNationId++,
             name: newNationName,
             color: newNationColor,
             cities: [],
@@ -2466,7 +2436,7 @@ class NationAI {
         };
         
         // Add the new nation
-        window.nations.push(newNation);
+        nations.push(newNation);
         
         // New nation starts at war with parent
         if (!nation.atWarWith) nation.atWarWith = [];
@@ -4137,7 +4107,7 @@ class EconomyManager {
         this.economicCenters = [];
         
         // Find the top 3 nations by GDP
-        const sortedNations = [...window.nations].sort((a, b) => (b.gdp || 0) - (a.gdp || 0));
+        const sortedNations = [...nations].sort((a, b) => (b.gdp || 0) - (a.gdp || 0));
         const topEconomies = sortedNations.slice(0, 3);
         
         for (const nation of topEconomies) {

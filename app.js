@@ -12,7 +12,7 @@ function formatNumber(num) {
 }
 
 // Initialize the application
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     // 탭 메뉴 기능 설정
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -498,117 +498,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         mapContainer.appendChild(expansionContainer);
     }
 
-    // 게임 상태 자동 복원 시도
-    let gameStateRestored = false;
-    
+    // Generate an initial random map
     try {
-        if (window.gameStateManager) {
-            console.log('게임 상태 자동 복원 시도...');
-            gameStateRestored = await window.gameStateManager.autoRestoreOnPageLoad();
-            
-            if (gameStateRestored) {
-                console.log('게임 상태가 성공적으로 복원되었습니다.');
-            } else {
-                console.log('복원할 게임 상태가 없거나 복원에 실패했습니다.');
-            }
+        if (terrainGenerator) {
+            console.log('초기 랜덤 지도 생성 시작');
+            terrainGenerator.generateRandomMap();
+            console.log('초기 랜덤 지도 생성 완료');
+        } else {
+            console.error('TerrainGenerator가 초기화되지 않았습니다.');
         }
     } catch (error) {
-        console.error('게임 상태 자동 복원 중 오류:', error);
-        gameStateRestored = false;
+        console.error('초기 지도 생성 중 오류 발생:', error);
     }
-    
-    // 게임 상태가 복원되지 않은 경우에만 초기 맵 생성
-    if (!gameStateRestored) {
-        try {
-            if (terrainGenerator) {
-                console.log('초기 랜덤 지도 생성 시작');
-                terrainGenerator.generateRandomMap();
-                console.log('초기 랜덤 지도 생성 완료');
-            } else {
-                console.error('TerrainGenerator가 초기화되지 않았습니다.');
-            }
-        } catch (error) {
-            console.error('초기 지도 생성 중 오류 발생:', error);
-        }
 
-        // 도시 이름을 한글로 변환
-        try {
-            pixelMap.koreanizeCityNames();
-        } catch (error) {
-            console.error('도시 이름 한글 변환 중 오류 발생:', error);
-        }
-    } else {
-        // 복원된 경우 UI만 업데이트
-        try {
-            if (window.gameStateManager) {
-                window.gameStateManager.updateUI();
-            }
-        } catch (error) {
-            console.error('복원 후 UI 업데이트 중 오류:', error);
-        }
+    // 도시 이름을 한글로 변환
+    try {
+        pixelMap.koreanizeCityNames();
+    } catch (error) {
+        console.error('도시 이름 한글 변환 중 오류 발생:', error);
     }
 });
-
-// 국가 정보 업데이트 함수
-function updateNation(nationId) {
-    const nation = nations.find(n => n.id === nationId);
-    if (!nation) {
-        console.error('국가를 찾을 수 없습니다:', nationId);
-        return;
-    }
-    
-    try {
-        // 입력 값 가져오기
-        const armyInput = document.getElementById(`edit-army-${nationId}`);
-        const popInput = document.getElementById(`edit-pop-${nationId}`);
-        const gdpInput = document.getElementById(`edit-gdp-${nationId}`);
-        const stabInput = document.getElementById(`edit-stab-${nationId}`);
-        
-        // 값 업데이트
-        if (armyInput) {
-            const newArmy = parseInt(armyInput.value);
-            if (newArmy >= 1 && newArmy <= 6) {
-                nation.armyStrength = newArmy;
-            }
-        }
-        
-        if (popInput) {
-            const newPop = parseInt(popInput.value);
-            if (newPop > 0) {
-                nation.population = newPop;
-            }
-        }
-        
-        if (gdpInput) {
-            const newGdp = parseInt(gdpInput.value);
-            if (newGdp > 0) {
-                nation.gdp = newGdp;
-            }
-        }
-        
-        if (stabInput) {
-            const newStab = parseInt(stabInput.value);
-            if (newStab >= 0 && newStab <= 100) {
-                nation.stability = newStab;
-            }
-        }
-        
-        // UI 업데이트
-        if (window.nationManager) {
-            window.nationManager.renderNationsList();
-        }
-        
-        // 자동저장 트리거
-        if (window.autoSaveSystem) {
-            window.autoSaveSystem.onGameEvent('nation_modified', { 
-                nationId: nationId, 
-                nationName: nation.name 
-            });
-        }
-        
-        console.log(`국가 ${nation.name} 정보가 업데이트되었습니다.`);
-        
-    } catch (error) {
-        console.error('국가 정보 업데이트 중 오류 발생:', error);
-    }
-}

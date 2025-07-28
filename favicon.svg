@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="mapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3c5a;stop-opacity:1" />
+      <stop offset="40%" style="stop-color:#355980;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#6aaa5e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8a9b55;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- 배경 -->
+  <rect x="4" y="4" width="56" height="56" rx="8" ry="8" fill="#1e1e1e" />
+  
+  <!-- 세계 상자 표현 -->
+  <rect x="12" y="12" width="40" height="40" rx="4" ry="4" fill="url(#mapGradient)" stroke="#333" stroke-width="2" />
+  
+  <!-- 그리드 라인 -->
+  <line x1="32" y1="12" x2="32" y2="52" stroke="#333" stroke-width="0.5" />
+  <line x1="12" y1="32" x2="52" y2="32" stroke="#333" stroke-width="0.5" />
+  
+  <!-- 국가 표시 -->
+  <circle cx="22" cy="22" r="5" fill="#ff6666" fill-opacity="0.8" />
+  <circle cx="42" cy="42" r="6" fill="#66aa66" fill-opacity="0.8" />
+  <circle cx="42" cy="22" r="4" fill="#6688ff" fill-opacity="0.8" />
+</svg> 
