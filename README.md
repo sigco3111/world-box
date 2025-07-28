@@ -6,7 +6,7 @@ World Box Lite는 웹 브라우저에서 동작하는 가벼운 국가 시뮬레
 
 원작 : https://websim.com/@gygy/pixel-nation-builder-2
 
-실행주소1 : https://world-box-lite.vercel.app/
+실행주소1 : https://world-box.vercel.app/
 
 실행주소2 : https://dev-canvas-pi.vercel.app/
 
